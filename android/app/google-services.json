@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "333803948536",
+    "project_id": "tp-modul-database",
+    "storage_bucket": "tp-modul-database.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:333803948536:android:f9771bc81eb8474e712e0d",
+        "android_client_info": {
+          "package_name": "com.example.tpmod12"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJYwMcIhKVRJuokF4I6UEZ1Cdzo92j20w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:333803948536:android:2d7f9dd27ee5ff63712e0d",
+        "android_client_info": {
+          "package_name": "com.example.tpmod13"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJYwMcIhKVRJuokF4I6UEZ1Cdzo92j20w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
