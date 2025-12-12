@@ -10,7 +10,7 @@ Future<void> main() async
 {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  NotificationService.getInitialNotification();
+  await NotificationService.getInitialNotification();
   FirebaseMessaging.onBackgroundMessage(NotificationService.firebaseMessagingBackgroundHandler);
   runApp(const MainApp());
 }

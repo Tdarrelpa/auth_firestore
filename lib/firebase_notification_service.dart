@@ -19,8 +19,65 @@ class NotificationService
   static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async 
   {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    await _initializeLocalNotification();
-    await _showFlutterNotification(message);
+    // await _initializeLocalNotification();
+    // await _showFlutterNotification(message);
+    stdout.write("Handling a background message: ${message.messageId}");
+  }
+
+  static Future<void> initializeLocalNotification() async 
+  {
+    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    stdout.write("User granted permission: ${settings.authorizationStatus}");
+
+    const AndroidInitializationSettings androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    
+    const DarwinInitializationSettings iosInit = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    
+    final InitializationSettings initSettings = InitializationSettings(
+      android: androidInit,
+      iOS: iosInit,
+    );
+    
+    await flutterLocalNotificationsPlugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {stdout.write("User tapped notification: ${response.payload}");},
+    );
+
+    await _createNotificationChannel();
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) 
+    {
+      stdout.write("Got a message whilst in the foreground!");
+      stdout.write("Message data: ${message.data}");
+
+      if (message.notification != null) 
+      {
+        stdout.write("Message also contained a notification: ${message.notification}");
+        _showFlutterNotification(message);
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) 
+    {
+      stdout.write("Got a message whilst in the foreground!");
+      stdout.write("Message data: ${message.data}");
+
+      if (message.notification != null) 
+      {
+        stdout.write("Message also contained a notification: ${message.notification}");
+        _showFlutterNotification(message);
+      }
+    });
+
+    await getFCMToken();
   }
 
   static Future<void> getFCMToken() async 
@@ -59,86 +116,51 @@ class NotificationService
   
   static Future<void> _showFlutterNotification(RemoteMessage message) async 
   {
-    final notification = message.notification;
-    final data = message.data;
-    String title = notification?.title ?? data['title'] ?? 'No Title';
-    String body = notification?.body ?? data['body'] ?? 'No Body';
-    await _createNotificationChannel();
+    RemoteNotification? notification = message.notification;
+    AndroidNotification? android = message.notification?.android;
 
-    AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      channelId,
-      channelName,
-      channelDescription: channelDescription,
-      priority: Priority.high,
-      importance: Importance.high,
-      showWhen: true,
-      enableVibration: true,
-      playSound: true,
-    );
-    
-    DarwinNotificationDetails iosDetails = const DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-    
-    NotificationDetails details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-    
-    try 
+    if (notification != null && android != null) 
     {
       await flutterLocalNotificationsPlugin.show(
-        DateTime.now().millisecondsSinceEpoch.remainder(100000), 
-        title, 
-        body, 
-        details // Seengaknya dipakai lah
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            channelName,
+            channelDescription: channelDescription,
+            importance: Importance.max,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+        ),
+        payload: message.data.toString(),
       );
-      stdout.write("Local notification shown successfully");
-    } 
-    catch (e) {stderr.write("Error showing notification: $e");}
+    }
   }
-  
+
   static Future<void> _createNotificationChannel() async 
   {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       channelId,
       channelName,
       description: channelDescription,
-      importance: Importance.high,
+      importance: Importance.max, // Max importance for heads-up display
       playSound: true,
       enableVibration: true,
       showBadge: true,
     );
     
-    await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
-  }
-
-  static Future<void> _initializeLocalNotification() async 
-  {
-    const AndroidInitializationSettings androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const DarwinInitializationSettings iosInit = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    
-    final InitializationSettings initSettings = InitializationSettings(
-      android: androidInit,
-      iOS: iosInit,
-    );
-    
-    await flutterLocalNotificationsPlugin.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {stdout.write("User tapped notification: ${response.payload}");},
-    );
-    
-    await _createNotificationChannel();
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
   }
 
   static Future<void> getInitialNotification() async 
   {
+    // RemoteMessage? message = await FirebaseMessaging.instance.getInitialMessage();
+    // if (message != null) {stdout.write("App launched via notification: ${message.data}");}
     RemoteMessage? message = await FirebaseMessaging.instance.getInitialMessage();
     if (message != null) {stdout.write("App launched via notification: ${message.data}");}
   }
