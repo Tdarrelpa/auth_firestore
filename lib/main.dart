@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'firebase_notification_service.dart';
 import 'firebase_auth_service.dart';
 import 'firebase_options.dart';
 
@@ -8,6 +10,8 @@ Future<void> main() async
 {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  NotificationService.getInitialNotification();
+  FirebaseMessaging.onBackgroundMessage(NotificationService.firebaseMessagingBackgroundHandler);
   runApp(const MainApp());
 }
 
@@ -1163,66 +1167,104 @@ class HomePage extends StatelessWidget
             const SizedBox(height: 5),
             Text("Selamat datang, ${user?.email}"),
             const SizedBox(height: 20),
-            ElevatedButton(
-              style: ButtonStyle(
-                textStyle: WidgetStateProperty.resolveWith<TextStyle>(
-                  (Set<WidgetState> states)
-                  {
-                    if (states.contains(WidgetState.pressed)) 
-                    {
-                      return const TextStyle(
-                        fontFamily: "Roboto",
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.w600
-                      ); // Pengaturan teks saat ditekan 
-                    }
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                ElevatedButton(
+                  style: ButtonStyle(
+                    textStyle: WidgetStateProperty.resolveWith<TextStyle>(
+                      (Set<WidgetState> states)
+                      {
+                        if (states.contains(WidgetState.pressed)) 
+                        {
+                          return const TextStyle(
+                            fontFamily: "Roboto",
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w600
+                          ); // Pengaturan teks saat ditekan 
+                        }
 
-                    return const TextStyle(
-                      fontFamily: "Roboto",
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.w300
-                    ); // Pengaturan teks default
-                  }
+                        return const TextStyle(
+                          fontFamily: "Roboto",
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w300
+                        ); // Pengaturan teks default
+                      }
+                    ),
+                    backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                      (Set<WidgetState> states) 
+                      {
+                        if (states.contains(WidgetState.pressed)) {return Colors.red.shade700;} // Warna saat ditekan
+                        return Colors.red; // Warna default
+                      },
+                    ),
+                    foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                      (Set<WidgetState> states)
+                      {
+                        if (states.contains(WidgetState.pressed)) {return Colors.white54;} // Warna saat ditekan
+                        return Colors.white; // Warna default
+                      }
+                    ),
+                    shape: WidgetStateProperty.resolveWith<RoundedRectangleBorder>(
+                      (Set<WidgetState> states)
+                      {
+                        if(states.contains(WidgetState.pressed))
+                        {
+                          return RoundedRectangleBorder(
+                            borderRadius: BorderRadiusGeometry.circular(16.0),
+                            side: const BorderSide(
+                              color: Color.fromARGB(255, 167, 106, 0),
+                              width: 5
+                            )
+                          ); // Bentuk dialog saat ditekan
+                        }
+                        return RoundedRectangleBorder(
+                          borderRadius: BorderRadiusGeometry.circular(8.0),
+                          side: const BorderSide(
+                            color: Color.fromARGB(168, 212, 127, 0),
+                            width: 1
+                          )
+                        ); // Bentuk dialog default
+                      }
+                    )
+                  ),
+                  onPressed: () => as.logout(), 
+                  child: const Text("Logout")
                 ),
-                backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                  (Set<WidgetState> states) 
-                  {
-                    if (states.contains(WidgetState.pressed)) {return Colors.red.shade700;} // Warna saat ditekan
-                    return Colors.red; // Warna default
-                  },
-                ),
-                foregroundColor: WidgetStateProperty.resolveWith<Color>(
-                  (Set<WidgetState> states)
-                  {
-                    if (states.contains(WidgetState.pressed)) {return Colors.white54;} // Warna saat ditekan
-                    return Colors.white; // Warna default
-                  }
-                ),
-                shape: WidgetStateProperty.resolveWith<RoundedRectangleBorder>(
-                  (Set<WidgetState> states)
-                  {
-                    if(states.contains(WidgetState.pressed))
-                    {
-                      return RoundedRectangleBorder(
-                        borderRadius: BorderRadiusGeometry.circular(16.0),
-                        side: const BorderSide(
-                          color: Color.fromARGB(255, 167, 106, 0),
-                          width: 5
-                        )
-                      ); // Bentuk dialog saat ditekan
-                    }
-                    return RoundedRectangleBorder(
-                      borderRadius: BorderRadiusGeometry.circular(8.0),
-                      side: const BorderSide(
-                        color: Color.fromARGB(168, 212, 127, 0),
-                        width: 1
-                      )
-                    ); // Bentuk dialog default
-                  }
+                const SizedBox(width: 20),
+                TextButton(
+                  style: ButtonStyle(
+                    textStyle: WidgetStateProperty.resolveWith<TextStyle>(
+                      (Set<WidgetState> states)
+                      {
+                        if (states.contains(WidgetState.pressed)) 
+                        {
+                          return const TextStyle(
+                            fontFamily: "Roboto",
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w500
+                          );  
+                        }
+                         return const TextStyle(
+                            fontFamily: "Roboto",
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.w300
+                          );  
+                      }
+                    ),
+                    foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                      (Set<WidgetState> states)
+                      {
+                        if (states.contains(WidgetState.pressed)) {return Colors.blue.shade700;}
+                        return Colors.blue;
+                      }
+                    ),
+                  ),
+                  onPressed: () => NotificationService.getFCMToken(), 
+                  child: const Text("Buat Token FCM")
                 )
-              ),
-              onPressed: () => as.logout(), 
-              child: const Text("Logout")
+              ],
             )
           ],
         ),
